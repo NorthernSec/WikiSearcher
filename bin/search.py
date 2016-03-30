@@ -14,32 +14,37 @@ sys.path.append(os.path.join(runPath, ".."))
 from lib.Config import Configuration as conf
 from lib.DatabaseConnection import dbConnector
 
+def filterResults(results):
+  results = [x for x in results if x['text'][:8] == '#REDIRECT']
+  return results
+
+def search(text, unfiltered=False):
+  results = db.searchPages(args.arg)
+  if not unfiltered: filterResults(results)
+  if len(results) == 0:
+    print('No results found')
+  else:
+    print('Index \tTitle \tContent')
+    for page in results:
+      print('%s \t%s \t%s'%(page['id'], page['title'], page['text'][:100]))
+
+
 if __name__=='__main__':
-  description='''generate sqlite db from wikipedia xml extact'''
+  description='''Query the Wikipedia data'''
 
   parser = argparse.ArgumentParser(description=description)
-  parser.add_argument('-db',              help='Location of the wikipedia sqlite db')
-  parser.add_argument('index', nargs="?", help='Index of the entry you want to open')
-  parser.add_argument('-s',               help='String the title has to contain')
+  parser.add_argument('-db',                metavar="path",      help='Location of the wikipedia sqlite db')
+  parser.add_argument('act',                metavar="action",    help='Action to take [(s)earch/(o)pen]')
+  parser.add_argument('arg',                metavar="argument",  help='Argument for action (title string for search, entry # for open')
+  parser.add_argument('--unfiltered', '-u', action="store_true", help="Don't filter the content")
   args = parser.parse_args()
 
-  # Check args
-  if not args.index and not args.s:
-    sys.exit("Please specify the index of the entry, or use -s to search")
-  if args.index and args.s:
-    sys.exit('''You cannot specify an index and use -s simultaniously.
-                If you search on more than one word, please make sure you put it between quotes.''')
-  
-  # Parse args
-  if args.db:
-    db = dbConnector(args.db)
-  else:
-    db = dbConnector(conf.getDBLocation())
+  # Select DB
+  if args.db: db = dbConnector(args.db)
+  else:       db = dbConnector(conf.getDBLocation())
 
-  if args.s:
-    print('Index \tTitle \tContent')
-    for page in db.searchPages(args.s):
-      print('%s \t%s \t%s'%(page['id'], page['title'], page['text'][:30]))
-  elif args.index:
-    print(args.index)
+  # Parse actions
+  action = args.act.lower()
+  if   action in ['s', 'search']: search(args.arg, args.unfiltered)
+  elif action in ['o', 'open']:   print(args.action)
 

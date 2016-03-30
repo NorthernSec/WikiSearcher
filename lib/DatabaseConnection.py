@@ -15,7 +15,34 @@ class dbConnector():
                     title    TEXT     NOT NULL,
                     content  BLOB     NOT NULL     UNIQUE,
                     sha1     TEXT     NOT NULL);''')
+    conn.execute('''CREATE TABLE IF NOT EXISTS Refs
+                   (title  TEXT  PRIMARY KEY,
+                    refTo  INT   NOT NULL,
+                    FOREIGN KEY(refTo) REFERENCES Wiki(id));''')
     return (conn, conn.cursor())
+
+  def createTmpRefs(self):
+    self.conn.execute('''CREATE TABLE IF NOT EXISTS TmpRefs
+                        (title  TEXT  PRIMARY KEY,
+                         refTo  TEXT  NOT NULL);''')
+
+  def dropTmpRefs(self):
+    self.conn.execute('DROP TABLE IF EXISTS TmpRefs')
+
+  def addTmpRef(self, title, redirect):
+    self.curs.execute('''INSERT OR REPLACE INTO TmpRefs(title, refTo)
+                         VALUES(?, ?)''',(title, redirect))
+    self.conn.commit()
+
+  def getTempRefs(self):
+    return selectAllFrom("TmpRefs")
+
+  def addRef(self, title, refTo):
+    self.curs.execute('''INSERT OR REPLACE INTO Refs(title, refTo)
+                           SELECT ?, id
+                           FROM Wiki
+                           WHERE Wiki.title == ?''',(title, title))
+    self.conn.commit()    
 
   def addPage(self, page):
     curs=self.curs
