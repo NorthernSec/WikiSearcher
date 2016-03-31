@@ -8,6 +8,7 @@ class dbConnector():
     self.openDB()
 
   # Functions
+  # connection & db actions
   def getConnection(self):
     conn=sqlite3.connect(self.db)
     conn.execute('''CREATE TABLE IF NOT EXISTS Wiki
@@ -16,11 +17,18 @@ class dbConnector():
                     content  BLOB     NOT NULL     UNIQUE,
                     sha1     TEXT     NOT NULL);''')
     conn.execute('''CREATE TABLE IF NOT EXISTS Refs
-                   (title  TEXT  PRIMARY KEY,
-                    refTo  INT   NOT NULL,
+                   (title    TEXT     PRIMARY KEY,
+                    refTo    INT      NOT NULL,
                     FOREIGN KEY(refTo) REFERENCES Wiki(id));''')
     return (conn, conn.cursor())
 
+  def openDB(self):
+    self.conn, self.curs = self.getConnection()
+
+  def closeDB(self):
+    self.conn.close()
+
+  # temp table for db creation
   def createTmpRefs(self):
     self.conn.execute('''CREATE TABLE IF NOT EXISTS TmpRefs
                         (title  TEXT  PRIMARY KEY,
@@ -37,6 +45,7 @@ class dbConnector():
   def getTempRefs(self):
     return self.selectAllFrom("TmpRefs")
 
+  # adding data
   def addRef(self, title, refTo):
     self.curs.execute('''INSERT OR REPLACE INTO Refs(title, refTo)
                            SELECT ?, id
@@ -52,6 +61,7 @@ class dbConnector():
                     VALUES(:title,:text,:sha1)''', entry)
     self.conn.commit()
 
+  # query data
   def searchPages(self, text):
     curs=self.curs
     wh=("title LIKE ?", "%"+text+"%")
@@ -61,11 +71,9 @@ class dbConnector():
       entry.pop('content')
     return data
 
-  def openDB(self):
-    self.conn, self.curs = self.getConnection()
-    
-  def closeDB(self):
-    self.conn.close()
+  def openPage(self, index):
+    page=self.selectAllFrom('Wiki', where=("id = ?", index))
+    return page['text'] if page else None
 
   def selectAllFrom(self, table, where=None):
     if where: where=list(where)
