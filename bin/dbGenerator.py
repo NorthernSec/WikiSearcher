@@ -54,7 +54,7 @@ if __name__=='__main__':
 
   # Add persistent refs to the DB
   for ref in db.getTempRefs():
-    db.addRef(ref['title'], ref['refTo'])
+    db.addRef(ref['title'], ref['refto'])
 
   # Remove the temp ref column
   db.dropTmpRefs()

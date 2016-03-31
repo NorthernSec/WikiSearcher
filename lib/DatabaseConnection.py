@@ -35,7 +35,7 @@ class dbConnector():
     self.conn.commit()
 
   def getTempRefs(self):
-    return selectAllFrom("TmpRefs")
+    return self.selectAllFrom("TmpRefs")
 
   def addRef(self, title, refTo):
     self.curs.execute('''INSERT OR REPLACE INTO Refs(title, refTo)
@@ -72,7 +72,7 @@ class dbConnector():
     if where and type(where[0]) is str: where[0]=[where[0]]
     if where and type(where[1]) is str: where[1]=[where[1]]
     vals = where[1] if where else ()
-    wh="where "+" and ".join(where[0]) if where[0] else ""
+    wh="where "+" and ".join(where[0]) if where and where[0] else ""
     data=list(self.curs.execute("SELECT * FROM %s %s;"%(table, wh), vals))
     dataArray=[]
     names = list(map(lambda x: x[0], self.curs.description))
