@@ -73,7 +73,10 @@ class dbConnector():
 
   def openPage(self, index):
     page=self.selectAllFrom('Wiki', where=("id = ?", index))
-    return page['text'] if page else None
+    if page:
+      return zlib.decompress(page[0]['content']).decode('utf-8')
+    else:
+      return None
 
   def selectAllFrom(self, table, where=None):
     if where: where=list(where)

@@ -26,8 +26,9 @@ def search(text):
     text = [[x['id'], x['title'], x['text']] for x in results]
     lI = max(max([len(str(x[0])) for x in text]), len("Index")) + 2
     lT = max(max([len(x[1]) for x in text]), len("Title")) + 2
+    text=[[x[0], x[1], x[2].replace("\n", " -- ")] for x in text]
     text=[al(str(x[0]), lI)+al(x[1], lT)+x[2][:50] for x in text]
-    text = [{'t': x} for x in text]
+    text = [{'t': x.replace("\n", " -- ")} for x in text]
     text.insert(0, al('Index', lI)+al('Title', lT)+'Content')
     display(text)
 
@@ -35,6 +36,7 @@ def open(index):
   try:
     text = db.openPage(index)
     if text:
+      text = text.split("\n")
       text = [{'t': x} for x in text]
       display(text)
     else:    print('Page not found')
@@ -42,13 +44,15 @@ def open(index):
     print('Please specify the index number')
 
 def display(text):
+  header=["Press ESC to quit. Use the keys to navigate, or use the hotkeys:", "(h)ome, (e)nd, (n)ext, (p)revious, page_(u)p and page_(d)own"]
+  nav={"home": "h", "end": "e", "next": "n", "prev": "p", "pg_up": "u", "pg_dn": "d"}
   screen = Specter()
   screen.start()
-  screen.scroll(text)
+  screen.scroll(text, header=header, nav=nav)
   screen.stop()
 
 def formatText(text):
-  return display
+  return text
 
 if __name__=='__main__':
   description='''Query the Wikipedia data'''
@@ -60,8 +64,8 @@ if __name__=='__main__':
   args = parser.parse_args()
 
   # Select DB
-  if args.db: db = dbConnector(args.db)
-  else:       db = dbConnector(conf.getDBLocation())
+  if args.db: db = dbConnector(args.db); print("Using %s"%args.db)
+  else:       db = dbConnector(conf.getDBLocation()); print("Using %s"%conf.getDBLocation())
 
   # Parse actions
   action = args.act.lower()
